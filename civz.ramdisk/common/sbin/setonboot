@@ -1,0 +1,4 @@
+#!/system/bin/sh
+
+checksu=`ls /data/data`
+[ -z "$checksu" ] && echo "Must be superuser!" && exit
