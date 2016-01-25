@@ -1,5 +1,5 @@
 #!/bin/bash
-# idleKernel for Samsung Galaxy Note 3 ramdisk setup script by jcadduono
+# CivZKernel for Samsung Galaxy Note 3 ramdisk setup script by jcadduono
 # This script is for Note 5 Touchwiz ports only
 
 # root directory of idleKernel git repo (default is this script's location)
@@ -25,8 +25,8 @@ VARIANT=can
 
 ############## SCARY NO-TOUCHY STUFF ###############
 
-if ! [ -d $RDIR"/ik.ramdisk/variant/$VARIANT/" ] ; then
-	echo "Device variant/carrier $VARIANT not found in ik.ramdisk/variant!"
+if ! [ -d $RDIR"/civz.ramdisk/variant/$VARIANT/" ] ; then
+	echo "Device variant/carrier $VARIANT not found in civz.ramdisk/variant!"
 	exit -1
 fi
 
@@ -59,7 +59,7 @@ SETUP_RAMDISK()
 	echo "Building ramdisk structure..."
 	cd $RDIR
 	mkdir -p build/ramdisk
-	cp -r ik.ramdisk/common/* ik.ramdisk/variant/$VARIANT/* build/ramdisk
+	cp -r civz.ramdisk/common/* civz.ramdisk/variant/$VARIANT/* build/ramdisk
 	cd $RDIR/build/ramdisk
 	mkdir -p dev proc sys system kmod carrier data
 	echo "Copying kernel modules to ramdisk..."
