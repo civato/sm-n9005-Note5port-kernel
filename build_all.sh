@@ -1,6 +1,7 @@
 #!/bin/bash
-# CivZKernel for Samsung Galaxy Note 3 build script by jcadduono
+# idleKernel for Samsung Galaxy Note 3 build script by jcadduono
 # This build script is for Note 5 Touchwiz ports only
+# This build script builds all variants in /ik.ramdisk/variant/
 
 ################### BEFORE STARTING ################
 #
@@ -10,49 +11,21 @@
 # Download it here: http://forum.xda-developers.com/showthread.php?t=2098133
 #
 # once you've set up the config section how you like it, you can simply run
-# ./build.sh
-# while inside the /CivZKernel-note3/ directory.
+# ./build_all.sh
+# while inside the /idleKernel-note3/ directory.
 #
 ###################### CONFIG ######################
 
 # root directory of idleKernel git repo (default is this script's location)
 RDIR=$(pwd)
 
-[ -z $VARIANT ] && \
-# device variant/carrier, possible options:
-#	att_N900A = N900A  (AT&T)
-#	can_N900W8 = N900W8 (Canadian, same as T-Mobile)
-#	eur_N9005 = N9005  (Snapdragon International / hltexx / Europe)
-#	spr_N900P = N900P  (Sprint)
-#	tmo_N900T = N900T  (T-Mobile, same as Canadian)
-#	usc_N900R4 = N900R4 (US Cellular)
-#	vzw_N900V = N900V  (Verizon)
-# korean variants:
-#	ktt_N900K = N900K  (KT Corporation)
-#	lgt_N900L = N900L  (LG Telecom)
-#	skt_N900S = N900S  (South Korea Telecom)
-# japanese variants:
-#	dcm_N900D = N900D / SC-01F  (NTT Docomo)
-#	kdi_N900J = N900J / SCL22   (au by KDDI)
-VARIANT=eur_N9005
-
 [ -z $VER ] && \
 # version number
 VER=$(cat $RDIR/VERSION)
 
-# kernel version string appended to 3.4.x-idleKernel-hlte-
-# (shown in Settings -> About device)
-KERNEL_VERSION=$VARIANT-$VER-Note5Port
-
-[ -z $PERMISSIVE ] && \
-# should we boot with SELinux mode set to permissive? (1 = permissive, 0 = enforcing)
-PERMISSIVE=1
-
 # output directory of flashable kernel
-OUT_DIR=$RDIR
-
-# output filename of flashable kernel
-OUT_NAME=CivZ_Xtra-$KERNEL_VERSION
+OUT_DIR_ENFORCING="$RDIR/1-ENFORCED/selinux_enforcing/v"$VER"_"$(date +'%Y_%m_%d')
+OUT_DIR_PERMISSIVE="$RDIR/1-PERMISSIVE/v"$VER"_"$(date +'%Y_%m_%d')
 
 # should we make a TWRP flashable zip? (1 = yes, 0 = no)
 MAKE_ZIP=1
@@ -66,23 +39,20 @@ TOOLCHAIN=~/Kernel/Toolchains/arm-cortex_a15-linux-gnueabihf-linaro_4.9.4-2015.0
 # amount of cpu threads to use in kernel make process
 THREADS=5
 
+SET_KERNEL_VERSION()
+{
+	# kernel version string appended to 3.4.x-civzKernel-hlte-
+	# (shown in Settings -> About device)
+	KERNEL_VERSION=$VARIANT-$VER-Note5Port
+
+	# output filename of flashable kernel
+	OUT_NAME=CivZ_Xtra-$KERNEL_VERSION
+}
+
 ############## SCARY NO-TOUCHY STUFF ###############
 
 export ARCH=arm
 export CROSS_COMPILE=$TOOLCHAIN/bin/arm-cortex_a15-linux-gnueabihf-
-export LOCALVERSION=$KERNEL_VERSION
-
-if ! [ -f $RDIR"/arch/arm/configs/variant_hlte_"$VARIANT ] ; then
-	echo "Device variant/carrier $VARIANT not found in arm configs!"
-	exit -1
-fi
-
-if ! [ -d $RDIR"/civz.ramdisk/variant/$VARIANT/" ] ; then
-	echo "Device variant/carrier $VARIANT not found in civz.ramdisk/variant!"
-	exit -1
-fi
-
-[ $PERMISSIVE -eq 1 ] && SELINUX="never_enforce" || SELINUX="always_enforce"
 
 KDIR=$RDIR/build/arch/arm/boot
 
@@ -164,4 +134,25 @@ DO_BUILD()
 	if [ $MAKE_TAR -eq 1 ]; then CREATE_TAR; fi
 }
 
-DO_BUILD
+#mkdir -p $OUT_DIR_ENFORCING
+mkdir -p $OUT_DIR_PERMISSIVE
+
+for V in $RDIR/civz.ramdisk/variant/*
+do
+	VARIANT=${V#$RDIR/civz.ramdisk/variant/}
+	if ! [ -f $RDIR"/arch/arm/configs/variant_hlte_"$VARIANT ] ; then
+		echo "Device variant/carrier $VARIANT not found in arm configs!"
+		continue
+	else
+		SET_KERNEL_VERSION
+		export LOCALVERSION=$KERNEL_VERSION
+		#OUT_DIR=$OUT_DIR_ENFORCING
+		#SELINUX="always_enforce"
+		#DO_BUILD
+		OUT_DIR=$OUT_DIR_PERMISSIVE
+		SELINUX="never_enforce"
+		DO_BUILD
+	fi
+done;
+
+echo "Finished!"

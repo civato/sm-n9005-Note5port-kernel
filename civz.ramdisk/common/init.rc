@@ -13,8 +13,8 @@ import /init.carrier.rc
 import /init.civato.rc
 import /init.n5.rc
 import /init.superuser.rc
-on early-init
 
+on early-init
     # Set init and its forked children's oom_adj.
     write /proc/1/oom_score_adj -1000
 
@@ -83,9 +83,9 @@ on init
     mkdir /efs 0771 system radio
 
     # See storage config details at http://source.android.com/tech/storage/
-# [ S Professional Audio
+
     mkdir /mnt/shell 0750 shell shell
-# ]
+
     mkdir /mnt/media_rw 0700 media_rw media_rw
     mkdir /storage 0751 root sdcard_r
 
@@ -94,18 +94,6 @@ on init
 
     # Create private mountpoint so we can MS_MOVE from staging
     mount tmpfs tmpfs /mnt/secure mode=0700,uid=0,gid=0
-
-    # Create mountpoint so Dalvik can mark as slave in zygotes.
-    # And this allow CIFS mounting and other app databases.
-    mkdir /mnt/shell/emulated 0700 shell shell
-    mount tmpfs tmpfs /storage mode=0751,uid=0,gid=1028
-    mount tmpfs tmpfs /mnt/shell/emulated mode=0700,uid=0,gid=0
-
-    #create tmpfs for mounts
-    mount -o remount,rw /
-    mkdir /mounts
-    chmod 777 /mounts
-    mount -t tmpfs tmpfs /mounts -o mode=0777,uid=0,gid=0
 
     # Directory for staging bindmounts
     mkdir /mnt/secure/staging 0700 root root
@@ -235,6 +223,20 @@ on late-init
     trigger early-boot
     trigger boot
 
+on fs
+    # For Absolute Persistence Partition 
+
+    mkdir /persdata 0755 system system 
+    mkdir /persdata/absolute 0750 system system
+
+    wait /dev/block/platform/msm_sdcc.1/by-name/persdata 
+    check_fs /dev/block/platform/msm_sdcc.1/by-name/persdata ext4 
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/persdata /persdata/absolute nosuid nodev barrier=1 
+
+    chown system system /persdata 
+    chmod 0755 /persdata 
+    chown system system /persdata/absolute 
+    chmod 0750 /persdata/absolute
 
 on post-fs
     mkdir /data/misc/vpnclientd 0770 system system
@@ -342,6 +344,7 @@ on post-fs-data
 
     # give system access to wpa_supplicant.conf for backup and restore
     chmod 0660 /data/misc/wifi/wpa_supplicant.conf
+    chown system wifi /data/misc/wifi/wpa_supplicant.conf
     mkdir /data/local 0751 root root
     mkdir /data/misc/media 0700 media media
     mkdir /data/misc/radio/hatp 0755 radio system
@@ -367,6 +370,12 @@ on post-fs-data
     chmod 0644 /efs/h2k.dat
     chmod 0644 /efs/cpk/h2k.dat
     chown system system /efs/drm/h2k
+
+    # proximity and gyro sensor permission
+    chmod 0644 /efs/prox_cal
+    chown system system /efs/prox_cal
+    chmod 0644 /efs/gyro_cal_data
+    chown system system /efs/gyro_cal_data
 
     # icd
     check_icd
@@ -805,6 +814,8 @@ on boot
     # NFC_SLSI
     chmod 0660 /dev/sec-nfc
     chown nfc nfc /dev/sec-nfc
+    mkdir /data/nfc 0700 nfc nfc
+    mkdir /data/nfc/param 0700 nfc nfc
 
     # KNOX KAP
     chown system system /dev/knox_kap

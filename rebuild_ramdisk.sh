@@ -37,7 +37,7 @@ VARIANT=can
 # version number
 VER=$(cat $RDIR/VERSION)
 
-# kernel version string appended to 3.4.x-idleKernel-hlte-
+# kernel version string appended to 3.4.x-civzKernel-hlte-
 # (shown in Settings -> About device)
 KERNEL_VERSION=$VARIANT-$VER-note5port
 
@@ -80,7 +80,7 @@ BUILD_RAMDISK()
 	VARIANT=$VARIANT $RDIR/setup_ramdisk.sh
 	cd $RDIR/build/ramdisk
 	echo "Building ramdisk.img..."
-	find | fakeroot cpio -o -H newc | xz --check=crc32 --lzma2=dict=2MiB > $KDIR/ramdisk.cpio.xz
+	find | fakeroot cpio -o -H newc | gzip -9 > $KDIR/ramdisk.cpio.gz
 	cd $RDIR
 }
 
@@ -88,7 +88,7 @@ BUILD_BOOT_IMG()
 {
 	echo "Generating boot.img..."
 	$RDIR/scripts/mkqcdtbootimg/mkqcdtbootimg --kernel $KDIR/zImage \
-		--ramdisk $KDIR/ramdisk.cpio.xz \
+		--ramdisk $KDIR/ramdisk.cpio.gz \
 		--dt_dir $KDIR \
 		--cmdline "quiet console=null androidboot.hardware=qcom user_debug=23 msm_rtb.filter=0x37 ehci-hcd.park=3" \
 		--base 0x00000000 \
@@ -96,6 +96,7 @@ BUILD_BOOT_IMG()
 		--ramdisk_offset 0x02000000 \
 		--tags_offset 0x01E00000 \
 		--output $RDIR/civz.zip/boot.img 
+        echo -n "SEANDROIDENFORCE" >> $RDIR/civz.zip/boot.img 
 }
 
 CREATE_ZIP()
