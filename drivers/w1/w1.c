@@ -552,6 +552,9 @@ static ssize_t w1_master_attribute_store_remove(struct device *dev,
 
 static ssize_t w1_master_attribute_show_verify_mac(struct device *dev, struct device_attribute *attr, char *buf)
 {
+#ifdef CONFIG_SVIEW_BYPASS
+	return sprintf(buf, "%d\n", 0);
+#else
 	int result = -1;
 #ifdef CONFIG_SEC_H_PROJECT
 	result = verified;
@@ -566,6 +569,7 @@ static ssize_t w1_master_attribute_show_verify_mac(struct device *dev, struct de
 #endif
 	printk("Inside w1_master_attribute_show_verify_mac() result = %d \n", result);
 	return sprintf(buf, "%d\n", result);
+#endif
 }
 
 #ifdef CONFIG_W1_CF
@@ -578,8 +582,12 @@ static ssize_t w1_master_attribute_show_cf(struct device *dev, struct device_att
 
 static ssize_t w1_master_attribute_show_check_id(struct device *dev, struct device_attribute *attr, char *buf)
 {
+#ifdef CONFIG_SVIEW_BYPASS
+	return sprintf(buf, "%d\n", 1);
+#else
 	printk("Inside w1_master_attribute_show_check_id id  = %d \n",id);
 	return sprintf(buf, "%d\n", id);
+#endif
 }
 
 static ssize_t w1_master_attribute_show_check_color(struct device *dev, struct device_attribute *attr, char *buf)
